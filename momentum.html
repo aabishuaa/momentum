@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Momentum — EYC AI Initiative Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Great+Vibes&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* Canvas */
+  --canvas:#F8F7F4;
+  --surface:#FFFFFF;
+  --surface-raised:#FAFAF8;
+  --border:#E8E6E1;
+  --border-strong:#D4D0C8;
+
+  /* Type */
+  --ink:#141414;
+  --ink-2:#4A4845;
+  --ink-3:#8C8984;
+  --ink-4:#B8B5AF;
+
+  /* Rail */
+  --rail:#141414;
+  --rail-w:228px;
+  --rail-text:rgba(255,255,255,0.5);
+  --rail-text-active:#FFFFFF;
+  --rail-border:rgba(255,255,255,0.07);
+
+  /* Accent — single indigo */
+  --accent:#5046E4;
+  --accent-dim:#6B63E8;
+  --accent-pale:#EEEDFB;
+  --accent-mid:rgba(80,70,228,0.12);
+
+  /* Signals — data only */
+  --green:#1A8A52;
+  --green-pale:#EDFAF3;
+  --amber:#C47A1A;
+  --amber-pale:#FEF6E4;
+  --red:#C4341A;
+  --red-pale:#FEF0ED;
+  --violet:#7B3FC4;
+  --violet-pale:#F4EEFB;
+  --teal:#1A8A80;
+  --teal-pale:#EDFAF9;
+  --slate:#4A5568;
+  --slate-pale:#EEF0F4;
+
+  /* Domain accent strips */
+  --d1:#5046E4;--d2:#1A8A52;--d3:#7B3FC4;--d4:#C4601A;
+
+  --font:'Sora',system-ui,sans-serif;
+  --ease:cubic-bezier(0.22,1,0.36,1);
+  --sh-xs:0 1px 2px rgba(0,0,0,0.04);
+  --sh-sm:0 2px 8px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --sh-md:0 8px 24px rgba(0,0,0,0.08),0 2px 6px rgba(0,0,0,0.04);
+  --sh-lg:0 20px 48px rgba(0,0,0,0.12),0 4px 12px rgba(0,0,0,0.06);
+}
+
+html,body{height:100%;background:var(--canvas);color:var(--ink);font-family:var(--font);font-size:13px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+
+.app{display:flex;height:100vh}
+
+/* ─────────────────────────────────────────
+   SIDEBAR
+───────────────────────────────────────── */
+.sb{
+  width:var(--rail-w);flex-shrink:0;background:var(--rail);
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:width 0.32s var(--ease);z-index:20;
+  border-right:1px solid rgba(0,0,0,0.2)
+}
+.sb.collapsed{width:56px}
+
+/* Brand */
+.sb-brand{
+  display:flex;align-items:center;gap:11px;
+  padding:16px 14px 14px;
+  border-bottom:1px solid var(--rail-border);
+  min-height:60px;flex-shrink:0
+}
+.logo-mark{
+  width:32px;height:32px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center
+}
+.logo-mark svg{width:32px;height:32px}
+.brand-text{overflow:hidden;transition:opacity 0.2s,width 0.32s var(--ease);white-space:nowrap}
+.sb.collapsed .brand-text{opacity:0;width:0;pointer-events:none}
+.brand-name{font-family:'Great Vibes',cursive;font-size:22px;color:#fff;line-height:1;letter-spacing:0.3px}
+.brand-sub{font-size:8px;color:rgba(255,255,255,0.25);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+
+/* Nav */
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0}
+.sb-nav::-webkit-scrollbar{display:none}
+
+.nav-section-label{
+  font-size:8.5px;font-weight:600;letter-spacing:1.8px;text-transform:uppercase;
+  color:rgba(255,255,255,0.2);padding:12px 14px 5px;
+  white-space:nowrap;transition:opacity 0.2s
+}
+.sb.collapsed .nav-section-label{opacity:0}
+
+.nav-item{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 10px;margin:1px 6px;border-radius:8px;
+  cursor:pointer;color:var(--rail-text);font-size:12px;font-weight:500;
+  transition:all 0.15s;white-space:nowrap;position:relative
+}
+.sb.collapsed .nav-item{justify-content:center;margin:1px 4px}
+.sb.collapsed .nav-label{display:none}
+.nav-item:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.8)}
+.nav-item.active{background:rgba(80,70,228,0.2);color:#fff}
+.nav-item.active .nav-icon-wrap{color:#fff}
+.nav-item.active::after{
+  content:'';position:absolute;left:-6px;top:50%;transform:translateY(-50%);
+  width:3px;height:18px;border-radius:0 2px 2px 0;background:var(--accent-dim)
+}
+.sb.collapsed .nav-item.active::after{left:-4px}
+.nav-icon-wrap{width:14px;height:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.nav-icon-wrap svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+.domain-item{
+  display:flex;align-items:center;gap:9px;
+  padding:6px 10px;margin:1px 6px;border-radius:7px;
+  cursor:pointer;color:rgba(255,255,255,0.35);font-size:11.5px;
+  transition:all 0.15s
+}
+.sb.collapsed .domain-item{justify-content:center}
+.sb.collapsed .domain-label{display:none}
+.domain-item:hover{color:rgba(255,255,255,0.6)}
+.domain-ring{width:20px;height:20px;flex-shrink:0}
+.domain-ring svg{width:20px;height:20px}
+
+/* Collapse toggle */
+.sb-foot{
+  padding:10px;border-top:1px solid var(--rail-border);flex-shrink:0
+}
+.sb-user{display:flex;align-items:center;gap:9px;padding:6px 4px;margin-bottom:6px}
+.sb.collapsed .sb-user{justify-content:center}
+.sb.collapsed .sb-user-info{display:none}
+.user-av{
+  width:28px;height:28px;border-radius:7px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dim));
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:#fff
+}
+.user-name{font-size:11.5px;font-weight:600;color:#fff}
+.user-role{font-size:9.5px;color:rgba(255,255,255,0.3)}
+.toggle-btn{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:7px;border-radius:7px;cursor:pointer;
+  color:rgba(255,255,255,0.25);font-size:10px;
+  transition:all 0.15s
+}
+.toggle-btn:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5)}
+.toggle-ic{width:13px;height:13px;transition:transform 0.32s var(--ease)}
+.toggle-ic svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8}
+.sb.collapsed .toggle-ic{transform:rotate(180deg)}
+.sb.collapsed .toggle-label{display:none}
+
+/* ─────────────────────────────────────────
+   MAIN
+───────────────────────────────────────── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* Topbar */
+.topbar{
+  height:52px;flex-shrink:0;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:12px;
+  box-shadow:var(--sh-xs)
+}
+.topbar-title{font-size:14px;font-weight:600;color:var(--ink)}
+.tb-divider{width:1px;height:16px;background:var(--border)}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tb-brand{display:flex;align-items:center;gap:10px;padding-left:16px;border-left:1px solid var(--border)}
+.tb-logo svg{width:24px;height:24px}
+.tb-wordmark{text-align:right}
+.tb-name{font-family:'Great Vibes',cursive;font-size:21px;color:var(--ink);line-height:1}
+.tb-sub{font-size:7.5px;color:var(--ink-3);letter-spacing:1.8px;text-transform:uppercase;margin-top:1px}
+
+.icon-btn{
+  width:30px;height:30px;border-radius:7px;
+  border:1px solid var(--border);background:var(--surface-raised);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all 0.15s;color:var(--ink-3);position:relative
+}
+.icon-btn:hover{background:var(--canvas);border-color:var(--border-strong);color:var(--ink-2)}
+.icon-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.notif-dot{position:absolute;top:6px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--red);border:1.5px solid var(--surface)}
+.ham-btn{
+  width:30px;height:30px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface-raised);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3.5px;cursor:pointer;
+  transition:all 0.15s
+}
+.ham-btn:hover{background:var(--canvas)}
+.ham-line{width:13px;height:1.5px;background:var(--ink-3);border-radius:1px}
+
+/* Canvas */
+.canvas{flex:1;overflow-y:auto;padding:18px 20px}
+.canvas::-webkit-scrollbar{width:4px}
+.canvas::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.view{display:none}
+.view.active{display:block;animation:fadeUp 0.3s var(--ease)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ─────────────────────────────────────────
+   SHARED COMPONENTS
+───────────────────────────────────────── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;box-shadow:var(--sh-xs)
+}
+.card-title{font-size:13px;font-weight:600;color:var(--ink)}
+.section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--ink-3)}
+
+.chip{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;letter-spacing:0.1px}
+.chip-accent{background:var(--accent-pale);color:var(--accent)}
+.chip-green{background:var(--green-pale);color:var(--green)}
+.chip-amber{background:var(--amber-pale);color:var(--amber)}
+.chip-red{background:var(--red-pale);color:var(--red)}
+.chip-violet{background:var(--violet-pale);color:var(--violet)}
+.chip-teal{background:var(--teal-pale);color:var(--teal)}
+.chip-slate{background:var(--slate-pale);color:var(--slate)}
+
+.status-pill{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 9px;border-radius:999px}
+.pill-active{background:var(--accent-pale);color:var(--accent)}
+.pill-done{background:var(--green-pale);color:var(--green)}
+.pill-stagnant{background:var(--amber-pale);color:var(--amber)}
+.pill-blocked{background:var(--red-pale);color:var(--red)}
+.pill-backlog{background:var(--slate-pale);color:var(--slate)}
+
+.cta-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--font);font-size:12px;font-weight:600;
+  border:none;border-radius:8px;padding:7px 13px;cursor:pointer;
+  transition:all 0.15s;letter-spacing:0.1px
+}
+.cta-btn svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cta-primary{background:var(--accent);color:#fff;box-shadow:0 1px 4px rgba(80,70,228,0.25)}
+.cta-primary:hover{background:#4239C8;box-shadow:0 4px 14px rgba(80,70,228,0.35);transform:translateY(-1px)}
+.cta-secondary{background:var(--surface);color:var(--ink-2);border:1px solid var(--border)}
+.cta-secondary:hover{background:var(--canvas);border-color:var(--border-strong)}
+
+.mini-av{
+  width:22px;height:22px;border-radius:6px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-weight:700;color:#fff
+}
+
+/* ─────────────────────────────────────────
+   HOME VIEW
+───────────────────────────────────────── */
+.home-layout{display:grid;grid-template-columns:1fr 268px;gap:12px;margin-bottom:12px}
+
+/* Peek card */
+.peek-card{padding:16px;position:relative;overflow:hidden}
+.peek-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),#8B83F0,var(--teal))}
+.peek-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.peek-expand{
+  width:24px;height:24px;border-radius:6px;
+  border:1px solid var(--border);background:var(--surface-raised);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all 0.15s;color:var(--ink-3)
+}
+.peek-expand:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.peek-expand svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+.metrics-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.metrics-row2{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.metric-box{padding:11px;background:var(--surface-raised);border:1px solid var(--border);border-radius:9px}
+.metric-val{font-size:22px;font-weight:800;line-height:1;letter-spacing:-0.5px;color:var(--ink)}
+.metric-delta{font-size:9px;font-weight:600;margin-top:3px}
+.metric-lbl{font-size:9px;color:var(--ink-3);font-weight:500;margin-top:2px}
+.delta-up{color:var(--green)}
+.delta-dn{color:var(--red)}
+.metric-box2{padding:10px;background:var(--surface-raised);border:1px solid var(--border);border-radius:9px}
+.metric-val2{font-size:18px;font-weight:800;letter-spacing:-0.4px;color:var(--ink);line-height:1}
+
+/* Right column */
+.home-right{display:flex;flex-direction:column;gap:10px}
+.search-card{padding:13px}
+.search-wrap{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface-raised);border:1px solid var(--border);
+  border-radius:8px;padding:8px 11px;margin-bottom:9px;
+  transition:border-color 0.15s
+}
+.search-wrap:focus-within{border-color:var(--accent);background:var(--surface)}
+.search-wrap svg{width:13px;height:13px;stroke:var(--ink-4);fill:none;stroke-width:1.6;stroke-linecap:round;flex-shrink:0}
+.search-wrap input{background:none;border:none;outline:none;font-family:var(--font);font-size:12px;color:var(--ink);width:100%}
+.search-wrap input::placeholder{color:var(--ink-4)}
+.date-card{padding:13px 14px;display:flex;align-items:center;gap:12px}
+.date-icon-wrap{
+  width:36px;height:36px;border-radius:9px;flex-shrink:0;
+  background:var(--accent-pale);border:1px solid rgba(80,70,228,0.12);
+  display:flex;align-items:center;justify-content:center
+}
+.date-icon-wrap svg{width:15px;height:15px;stroke:var(--accent);fill:none;stroke-width:1.6;stroke-linecap:round}
+.date-main{font-size:12.5px;font-weight:600;color:var(--ink)}
+.date-sub{font-size:10px;color:var(--ink-3);margin-top:1px}
+
+/* Momentum strip */
+.momentum-strip{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:12px 16px;margin-bottom:12px;
+  display:flex;align-items:center;gap:14px;box-shadow:var(--sh-xs)
+}
+.mom-label{font-size:11px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.mom-track{display:flex;align-items:center;flex:1;overflow:hidden}
+.mom-stage{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:5px 9px;border-radius:7px;cursor:pointer;
+  opacity:0.3;transition:all 0.15s;flex-shrink:0
+}
+.mom-stage:hover{opacity:0.65}
+.mom-stage.current{opacity:1;background:var(--accent-pale)}
+.mom-stage-ic{width:16px;height:16px}
+.mom-stage-ic svg{width:16px;height:16px;stroke:var(--ink-3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.mom-stage.current .mom-stage-ic svg{stroke:var(--accent)}
+.mom-stage-lbl{font-size:7px;color:var(--ink-3);letter-spacing:0.3px;font-weight:500;white-space:nowrap}
+.mom-stage.current .mom-stage-lbl{color:var(--accent);font-weight:700}
+.mom-connector{flex:1;height:1px;background:var(--border);min-width:4px}
+.mom-status{
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+  background:var(--green-pale);border:1px solid rgba(26,138,82,0.15);
+  border-radius:999px;padding:5px 13px
+}
+.pulse-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 0 0 rgba(26,138,82,0.3);
+  animation:pulse-green 2.4s ease-in-out infinite
+}
+@keyframes pulse-green{
+  0%,100%{box-shadow:0 0 0 0 rgba(26,138,82,0.3)}
+  50%{box-shadow:0 0 0 6px rgba(26,138,82,0)}
+}
+.mom-status-label{font-size:11px;font-weight:700;color:var(--green)}
+.mom-status-ic svg{width:14px;height:14px;stroke:var(--green);fill:none;stroke-width:1.6;stroke-linecap:round}
+.mom-tagline{font-size:10px;color:var(--ink-3);font-style:italic;white-space:nowrap}
+
+/* Domain grid */
+.domains-header{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.domain-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+
+.dc{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;cursor:pointer;
+  transition:all 0.22s var(--ease);box-shadow:var(--sh-xs);
+  animation:fadeUp 0.5s var(--ease) both
+}
+.dc:nth-child(1){animation-delay:0ms}
+.dc:nth-child(2){animation-delay:60ms}
+.dc:nth-child(3){animation-delay:120ms}
+.dc:nth-child(4){animation-delay:180ms}
+.dc:hover{transform:translateY(-2px);box-shadow:var(--sh-md);border-color:var(--border-strong)}
+
+.dc-accent-strip{height:3px;border-radius:0}
+.dc-body{padding:14px}
+.dc-top-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.dc-name{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.2}
+.dc-intent{font-size:10px;color:var(--ink-3);margin-top:3px;line-height:1.4}
+.dc-chip-row{margin-top:7px}
+.dc-ring{width:44px;height:44px;flex-shrink:0;position:relative}
+.dc-ring svg{width:44px;height:44px}
+.dc-ring-pct{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:9.5px;font-weight:700
+}
+.dc-owner-row{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.dc-owner-name{font-size:10px;color:var(--ink-3)}
+.dc-divider{height:1px;background:var(--border);margin-bottom:11px}
+.dc-stats{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;gap:0}
+.dc-stat-val{font-size:18px;font-weight:800;color:var(--ink);letter-spacing:-0.4px;line-height:1}
+.dc-stat-lbl{font-size:8px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.8px;font-weight:500;margin-top:2px}
+.dc-footer{
+  padding:8px 14px 11px;display:flex;justify-content:flex-end;
+}
+.view-link{
+  display:flex;align-items:center;gap:4px;
+  font-size:10px;font-weight:600;color:var(--ink-3);transition:color 0.15s
+}
+.view-link svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+.dc:hover .view-link{color:var(--accent)}
+
+/* ─────────────────────────────────────────
+   DASHBOARD VIEW
+───────────────────────────────────────── */
+.dash-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+.kpi-card{padding:14px 16px;animation:fadeUp 0.4s var(--ease) both}
+.kpi-card:nth-child(1){animation-delay:0ms}
+.kpi-card:nth-child(2){animation-delay:40ms}
+.kpi-card:nth-child(3){animation-delay:80ms}
+.kpi-card:nth-child(4){animation-delay:120ms}
+.kpi-card:nth-child(5){animation-delay:160ms}
+.kpi-val{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1;color:var(--ink)}
+.kpi-lbl{font-size:10px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.kpi-delta{font-size:10px;font-weight:600;margin-top:6px}
+.kpi-bar-track{height:2px;background:var(--border);border-radius:1px;margin-top:10px;overflow:hidden}
+.kpi-bar-fill{height:100%;border-radius:1px;transition:width 1s var(--ease)}
+
+.dash-export{padding:15px 16px;margin-bottom:14px}
+.export-options{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}
+.export-opt{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:14px 10px;background:var(--surface-raised);
+  border:1px solid var(--border);border-radius:9px;
+  cursor:pointer;transition:all 0.15s;text-align:center
+}
+.export-opt:hover{border-color:var(--accent);background:var(--accent-pale)}
+.export-opt:hover .exp-icon svg{stroke:var(--accent)}
+.exp-icon{width:22px;height:22px;color:var(--ink-3)}
+.exp-icon svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;transition:stroke 0.15s}
+.exp-name{font-size:11px;font-weight:600;color:var(--ink)}
+.exp-desc{font-size:9.5px;color:var(--ink-3)}
+
+.dash-mid{display:grid;grid-template-columns:1.5fr 1fr;gap:12px;margin-bottom:14px}
+
+/* Activity table */
+.activity-table{width:100%;border-collapse:collapse}
+.activity-table th{
+  font-size:9.5px;font-weight:600;color:var(--ink-3);
+  text-transform:uppercase;letter-spacing:0.8px;
+  padding:8px 12px;border-bottom:1px solid var(--border);
+  text-align:left
+}
+.activity-table td{padding:9px 12px;border-bottom:1px solid rgba(0,0,0,0.03)}
+.activity-table tr:last-child td{border-bottom:none}
+.activity-table tbody tr{cursor:pointer;transition:background 0.1s}
+.activity-table tbody tr:hover td{background:var(--surface-raised)}
+.act-priority{width:5px;height:5px;border-radius:50%;display:inline-block;margin-right:7px;flex-shrink:0}
+.act-name{font-size:11px;font-weight:500;color:var(--ink)}
+.act-sub{font-size:10px;color:var(--ink-3)}
+
+/* Donut */
+.donut-section{display:flex;flex-direction:column;align-items:center;padding:16px}
+.donut-wrap{position:relative;width:130px;height:130px;margin-bottom:14px}
+.donut-wrap svg{width:100%;height:100%}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.donut-num{font-size:25px;font-weight:800;color:var(--ink);letter-spacing:-0.5px;line-height:1}
+.donut-lbl{font-size:8.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:7px 14px}
+.leg-row{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--ink-2)}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* ─────────────────────────────────────────
+   MEETING VIEW
+───────────────────────────────────────── */
+.meeting-hero{
+  background:var(--ink);border-radius:12px;
+  padding:22px 24px;margin-bottom:14px;
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+  position:relative;overflow:hidden
+}
+.meeting-hero::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(80,70,228,0.15),transparent 70%)
+}
+.hero-left .hero-eyebrow{font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px}
+.hero-left .hero-title{font-size:19px;font-weight:700;color:#fff;letter-spacing:-0.3px}
+.hero-stats{display:flex;gap:0;border-left:1px solid rgba(255,255,255,0.1)}
+.h-stat{padding:0 22px;text-align:center;border-right:1px solid rgba(255,255,255,0.1)}
+.h-stat:first-child{padding-left:22px}
+.h-num{font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px;line-height:1}
+.h-num.green{color:#4ade80}
+.h-num.amber{color:#fbbf24}
+.h-lbl{font-size:8.5px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:1.2px;margin-top:4px}
+
+.meet-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.meet-col{padding:16px}
+.meet-col-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.meet-col-title svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.title-win{color:var(--green)}
+.title-att{color:var(--amber)}
+
+.win-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 10px;border:1px solid var(--border);border-radius:8px;
+  margin-bottom:6px;transition:border-color 0.15s;cursor:pointer
+}
+.win-item:hover{border-color:var(--border-strong)}
+.win-name{font-size:11px;font-weight:500;color:var(--ink)}
+.win-meta{font-size:9.5px;color:var(--ink-3);margin-top:2px}
+
+.att-item{
+  padding:9px 11px;border-radius:8px;margin-bottom:6px;
+  border-left:3px solid var(--amber);
+  background:var(--amber-pale);
+  border-top:1px solid rgba(196,122,26,0.1);
+  border-right:1px solid rgba(196,122,26,0.1);
+  border-bottom:1px solid rgba(196,122,26,0.1);
+  cursor:pointer;transition:box-shadow 0.15s
+}
+.att-item:hover{box-shadow:var(--sh-sm)}
+.att-item.critical{border-left-color:var(--red);background:var(--red-pale);border-color:rgba(196,52,26,0.1);border-left-color:var(--red)}
+.att-name{font-size:11px;font-weight:500;color:var(--ink)}
+.att-warn{font-size:9.5px;font-weight:600;margin-top:2px;color:var(--amber)}
+.att-item.critical .att-warn{color:var(--red)}
+
+/* ─────────────────────────────────────────
+   ACTIVITY VIEW (KANBAN)
+───────────────────────────────────────── */
+.act-view-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.k-col{background:var(--surface-raised);border:1px solid var(--border);border-radius:10px;padding:10px}
+.k-col-hdr{display:flex;align-items:center;justify-content:space-between;padding:2px 3px;margin-bottom:9px}
+.k-col-name{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.1px}
+.k-col-name.bk{color:var(--ink-3)}
+.k-col-name.ip{color:var(--accent)}
+.k-col-name.bl{color:var(--red)}
+.k-col-name.dn{color:var(--green)}
+.k-col-ct{font-size:10px;color:var(--ink-3)}
+.k-add{
+  font-size:10px;color:var(--ink-3);padding:2px 6px;border-radius:5px;
+  border:1px solid transparent;cursor:pointer;transition:all 0.12s
+}
+.k-add:hover{border-color:var(--border);color:var(--ink-2);background:var(--surface)}
+
+.k-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:9px 9px 9px 13px;margin-bottom:6px;cursor:pointer;
+  transition:all 0.15s;position:relative;overflow:hidden
+}
+.k-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0}
+.k-card.p-high::before{background:var(--red)}
+.k-card.p-med::before{background:var(--amber)}
+.k-card.p-low::before{background:var(--border-strong)}
+.k-card:hover{border-color:var(--border-strong);box-shadow:var(--sh-sm)}
+.k-card.stagnant{background:linear-gradient(to bottom right,#fff,#FEFCF4);border-color:rgba(196,122,26,0.2)}
+.k-stag-label{font-size:9px;font-weight:600;color:var(--amber);margin-bottom:4px}
+.k-card-title{font-size:11px;font-weight:500;color:var(--ink);line-height:1.4;margin-bottom:7px}
+.k-card-footer{display:flex;align-items:center;justify-content:space-between}
+.k-card-time{font-size:9px;color:var(--ink-4);letter-spacing:-0.1px}
+
+/* ─────────────────────────────────────────
+   CALENDAR VIEW
+───────────────────────────────────────── */
+.cal-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.cal-month{font-size:17px;font-weight:700;color:var(--ink);letter-spacing:-0.3px}
+.cal-nav{display:flex;gap:5px}
+.cal-nav-btn{
+  width:26px;height:26px;border-radius:6px;
+  border:1px solid var(--border);background:var(--surface);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--ink-3);transition:all 0.15s
+}
+.cal-nav-btn svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+.cal-nav-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-pale)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-day-label{text-align:center;font-size:9.5px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:1.2px;padding:5px 0}
+.cal-day{
+  min-height:78px;background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:7px;cursor:pointer;transition:all 0.15s
+}
+.cal-day:hover{border-color:var(--border-strong);box-shadow:var(--sh-xs)}
+.cal-day.today{border-color:var(--accent);background:var(--accent-pale)}
+.cal-day.other{opacity:0.3}
+.cal-day-num{font-size:11px;font-weight:700;color:var(--ink-3);margin-bottom:4px}
+.cal-day.today .cal-day-num{color:var(--accent)}
+.cal-ev{font-size:8.5px;font-weight:600;padding:2px 5px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ce-accent{background:var(--accent-pale);color:var(--accent)}
+.ce-teal{background:var(--teal-pale);color:var(--teal)}
+.ce-amber{background:var(--amber-pale);color:var(--amber)}
+.ce-violet{background:var(--violet-pale);color:var(--violet)}
+
+/* ─────────────────────────────────────────
+   SLIDE-OVER PANEL
+───────────────────────────────────────── */
+.panel-backdrop{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,0.2);backdrop-filter:blur(2px);
+  opacity:0;pointer-events:none;transition:opacity 0.25s
+}
+.panel-backdrop.open{opacity:1;pointer-events:all}
+.panel{
+  position:fixed;top:0;right:0;bottom:0;width:448px;
+  background:var(--surface);border-left:1px solid var(--border);
+  z-index:101;transform:translateX(100%);
+  transition:transform 0.35s var(--ease);
+  display:flex;flex-direction:column;box-shadow:var(--sh-lg)
+}
+.panel.open{transform:none}
+
+.panel-head{
+  padding:16px 18px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;justify-content:space-between;
+  background:var(--surface-raised)
+}
+.ph-tags{display:flex;gap:5px;margin-bottom:7px}
+.ph-title{font-size:15px;font-weight:700;color:var(--ink);line-height:1.3;letter-spacing:-0.2px}
+.ph-meta{font-size:10px;color:var(--ink-3);margin-top:4px}
+.close-btn{
+  width:24px;height:24px;border-radius:6px;border:1px solid var(--border);
+  background:var(--surface);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--ink-3);transition:all 0.15s;flex-shrink:0
+}
+.close-btn svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.close-btn:hover{background:var(--red-pale);border-color:rgba(196,52,26,0.2);color:var(--red)}
+
+.panel-body{flex:1;overflow-y:auto;padding:16px 18px}
+.panel-body::-webkit-scrollbar{width:3px}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.pf-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:13px}
+.pf-item{display:flex;flex-direction:column;gap:2px}
+.pf-label{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-3)}
+.pf-value{font-size:12px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:5px}
+
+.stag-warning{
+  display:flex;align-items:center;gap:8px;
+  background:var(--amber-pale);border:1px solid rgba(196,122,26,0.15);
+  border-left:3px solid var(--amber);border-radius:8px;
+  padding:10px 12px;font-size:11px;font-weight:500;color:#7A4A00;margin-bottom:13px
+}
+.stag-warning svg{width:13px;height:13px;stroke:var(--amber);fill:none;stroke-width:1.8;stroke-linecap:round;flex-shrink:0}
+
+.update-section{border-left:2px solid var(--teal);padding-left:13px;margin-bottom:13px}
+.update-label{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-3);margin-bottom:9px}
+.status-pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:11px}
+.status-toggle{
+  font-size:10px;font-weight:600;padding:5px 12px;border-radius:999px;
+  border:1.5px solid;cursor:pointer;transition:all 0.15s;
+  font-family:var(--font)
+}
+.st-active{border-color:var(--accent);color:var(--accent)}
+.st-active.selected{background:var(--accent);color:#fff}
+.st-done{border-color:var(--green);color:var(--green)}
+.st-done.selected{background:var(--green);color:#fff}
+.st-blocked{border-color:var(--red);color:var(--red)}
+.st-blocked.selected{background:var(--red);color:#fff}
+.st-backlog{border-color:var(--ink-3);color:var(--ink-3)}
+.st-backlog.selected{background:var(--ink-3);color:#fff}
+
+.update-textarea{
+  width:100%;background:var(--surface-raised);border:1px solid var(--border);
+  border-radius:8px;padding:10px;color:var(--ink);
+  font-family:var(--font);font-size:12px;resize:none;height:78px;
+  outline:none;line-height:1.5;transition:border-color 0.15s
+}
+.update-textarea:focus{border-color:var(--teal);background:var(--surface)}
+.update-textarea::placeholder{color:var(--ink-4)}
+.update-footer{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.char-count{font-size:9px;color:var(--ink-4)}
+.log-btn{
+  background:var(--ink);color:#fff;font-family:var(--font);font-size:12px;font-weight:700;
+  border:none;border-radius:8px;padding:9px 18px;cursor:pointer;
+  transition:all 0.15s;margin-top:8px;width:100%;letter-spacing:0.1px
+}
+.log-btn:hover{background:var(--accent);box-shadow:0 4px 14px rgba(80,70,228,0.3)}
+
+.history-divider{height:1px;background:var(--border);margin:14px 0}
+.history-lbl{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-3);margin-bottom:12px}
+.hist-entry{display:flex;gap:10px;margin-bottom:13px}
+.hist-av-col{display:flex;flex-direction:column;align-items:center}
+.hist-vline{width:1px;flex:1;background:var(--border);margin-top:5px}
+.hist-content{flex:1}
+.hist-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:4px}
+.hist-author{font-size:11px;font-weight:600;color:var(--ink)}
+.hist-time{font-size:9.5px;color:var(--ink-3)}
+.hist-note{font-size:11.5px;color:var(--ink-2);line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══════════════════════════════════
+     SIDEBAR
+══════════════════════════════════ -->
+<nav class="sb" id="sidebar">
+  <div class="sb-brand">
+    <!-- Precise orbital SVG logo - mathematical, no emojis -->
+    <div class="logo-mark">
+      <svg viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="2.8" fill="white"/>
+        <!-- 3 orbital ellipses at 0°, 60°, 120° -->
+        <ellipse cx="16" cy="16" rx="13" ry="5" stroke="rgba(255,255,255,0.9)" stroke-width="1.2" fill="none"/>
+        <ellipse cx="16" cy="16" rx="13" ry="5" stroke="rgba(255,255,255,0.5)" stroke-width="1.2" fill="none" transform="rotate(60 16 16)"/>
+        <ellipse cx="16" cy="16" rx="13" ry="5" stroke="rgba(255,255,255,0.5)" stroke-width="1.2" fill="none" transform="rotate(120 16 16)"/>
+        <!-- Electron dot -->
+        <circle cx="29" cy="16" r="2.2" fill="#8B83F0"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <div class="brand-name">Momentum</div>
+      <div class="brand-sub">EYC AI Tracker</div>
+    </div>
+  </div>
+
+  <div class="sb-nav">
+    <!-- Main nav -->
+    <div class="nav-item active" onclick="switchView('home', this)">
+      <div class="nav-icon-wrap">
+        <svg viewBox="0 0 14 14"><path d="M1 6L7 1l6 5v6.5a.5.5 0 01-.5.5H9v-4H5v4H1.5a.5.5 0 01-.5-.5V6z"/></svg>
+      </div>
+      <span class="nav-label">Home</span>
+    </div>
+    <div class="nav-item" onclick="switchView('dashboard', this)">
+      <div class="nav-icon-wrap">
+        <svg viewBox="0 0 14 14"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
+      </div>
+      <span class="nav-label">Dashboard View</span>
+    </div>
+    <div class="nav-item" onclick="switchView('meeting', this)">
+      <div class="nav-icon-wrap">
+        <svg viewBox="0 0 14 14"><circle cx="7" cy="5" r="2.5"/><path d="M1.5 13c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>
+      </div>
+      <span class="nav-label">Meeting View</span>
+    </div>
+    <div class="nav-item" onclick="switchView('activity', this)">
+      <div class="nav-icon-wrap">
+        <svg viewBox="0 0 14 14"><path d="M1 4h12M1 7h8M1 10h5"/><circle cx="12" cy="10" r="2"/><path d="M12 8.5v1.5l1 .75"/></svg>
+      </div>
+      <span class="nav-label">Activity View</span>
+    </div>
+    <div class="nav-item" onclick="switchView('calendar', this)">
+      <div class="nav-icon-wrap">
+        <svg viewBox="0 0 14 14"><rect x="1" y="2.5" width="12" height="10" rx="1.5"/><path d="M1 6h12M4.5 1v3M9.5 1v3"/></svg>
+      </div>
+      <span class="nav-label">Calendar</span>
+    </div>
+
+    <div class="nav-section-label">Domains</div>
+
+    <!-- Domain progress rings -->
+    <div class="domain-item">
+      <div class="domain-ring">
+        <svg viewBox="0 0 20 20">
+          <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(80,70,228,0.15)" stroke-width="2.5"/>
+          <circle cx="10" cy="10" r="8" fill="none" stroke="#8B83F0" stroke-width="2.5"
+            stroke-dasharray="39 12" stroke-linecap="round"
+            style="transform:rotate(-90deg);transform-origin:50% 50%"/>
+        </svg>
+      </div>
+      <span class="domain-label">Marketing</span>
+    </div>
+    <div class="domain-item">
+      <div class="domain-ring">
+        <svg viewBox="0 0 20 20">
+          <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(26,138,82,0.2)" stroke-width="2.5"/>
+          <circle cx="10" cy="10" r="8" fill="none" stroke="#4ade80" stroke-width="2.5"
+            stroke-dasharray="33 18" stroke-linecap="round"
+            style="transform:rotate(-90deg);transform-origin:50% 50%"/>
+        </svg>
+      </div>
+      <span class="domain-label">Business Dev</span>
+    </div>
+    <div class="domain-item">
+      <div class="domain-ring">
+        <svg viewBox="0 0 20 20">
+          <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(123,63,196,0.2)" stroke-width="2.5"/>
+          <circle cx="10" cy="10" r="8" fill="none" stroke="#a78bfa" stroke-width="2.5"
+            stroke-dasharray="19 32" stroke-linecap="round"
+            style="transform:rotate(-90deg);transform-origin:50% 50%"/>
+        </svg>
+      </div>
+      <span class="domain-label">Capability Dev</span>
+    </div>
+    <div class="domain-item">
+      <div class="domain-ring">
+        <svg viewBox="0 0 20 20">
+          <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(196,96,26,0.2)" stroke-width="2.5"/>
+          <circle cx="10" cy="10" r="8" fill="none" stroke="#fb923c" stroke-width="2.5"
+            stroke-dasharray="9 42" stroke-linecap="round"
+            style="transform:rotate(-90deg);transform-origin:50% 50%;"/>
+        </svg>
+      </div>
+      <span class="domain-label">Resourcing</span>
+    </div>
+  </div>
+
+  <div class="sb-foot">
+    <div class="sb-user">
+      <div class="user-av">AM</div>
+      <div class="sb-user-info">
+        <div class="user-name">Anil M.</div>
+        <div class="user-role">Admin · EYC</div>
+      </div>
+    </div>
+    <div class="toggle-btn" onclick="toggleSidebar()">
+      <div class="toggle-ic">
+        <svg viewBox="0 0 13 13"><path d="M8 2L4 6.5 8 11"/></svg>
+      </div>
+      <span class="toggle-label">Collapse</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════
+     MAIN AREA
+══════════════════════════════════ -->
+<div class="main">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <span class="topbar-title" id="topbar-title">Home</span>
+    <div class="tb-divider"></div>
+    <div class="tb-right">
+      <div class="icon-btn" onclick="openPanel()" title="Notifications">
+        <svg viewBox="0 0 14 14"><path d="M7 1.5a3.5 3.5 0 013.5 3.5v3.5l1 1.5H2.5l1-1.5V5A3.5 3.5 0 017 1.5zM5.5 10.5a1.5 1.5 0 003 0"/></svg>
+        <div class="notif-dot"></div>
+      </div>
+      <div class="icon-btn" title="Settings">
+        <svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="2"/><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.6 2.6l1.1 1.1M10.3 10.3l1.1 1.1M2.6 11.4l1.1-1.1M10.3 3.7l1.1-1.1"/></svg>
+      </div>
+      <div class="tb-brand">
+        <div class="tb-wordmark">
+          <div class="tb-name">Momentum</div>
+          <div class="tb-sub">EYC AI Initiative Tracker</div>
+        </div>
+        <!-- Inline logo mark -->
+        <div class="tb-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="2" fill="var(--ink)"/>
+            <ellipse cx="12" cy="12" rx="10" ry="3.8" stroke="var(--ink)" stroke-width="1" fill="none" opacity="0.8"/>
+            <ellipse cx="12" cy="12" rx="10" ry="3.8" stroke="var(--ink)" stroke-width="1" fill="none" opacity="0.4" transform="rotate(60 12 12)"/>
+            <ellipse cx="12" cy="12" rx="10" ry="3.8" stroke="var(--ink)" stroke-width="1" fill="none" opacity="0.4" transform="rotate(120 12 12)"/>
+            <circle cx="22" cy="12" r="1.8" fill="var(--accent)"/>
+          </svg>
+        </div>
+        <div class="ham-btn" onclick="toggleSidebar()">
+          <div class="ham-line"></div>
+          <div class="ham-line"></div>
+          <div class="ham-line"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CANVAS -->
+  <main class="canvas">
+
+    <!-- ══ HOME ══ -->
+    <div class="view active" id="view-home">
+      <div class="home-layout">
+        <!-- Peek card -->
+        <div class="card peek-card">
+          <div class="peek-header">
+            <span class="section-label">Dashboard Peek</span>
+            <div class="peek-expand" onclick="switchView('dashboard',null)" title="Expand to full dashboard">
+              <svg viewBox="0 0 12 12"><path d="M7.5 1H11v3.5M11 1L6.5 5.5M5 3H1.5A.5.5 0 001 3.5V10.5a.5.5 0 00.5.5h7a.5.5 0 00.5-.5V7"/></svg>
+            </div>
+          </div>
+          <div class="metrics-row">
+            <div class="metric-box">
+              <div class="metric-val" style="color:var(--accent)">128</div>
+              <div class="metric-delta delta-up">↑ 12% vs last 7d</div>
+              <div class="metric-lbl">Total Activities</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-val" style="color:var(--accent)">62</div>
+              <div class="metric-delta delta-up">↑ 8%</div>
+              <div class="metric-lbl">In Progress</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-val" style="color:var(--green)">34</div>
+              <div class="metric-delta delta-up">↑ 15%</div>
+              <div class="metric-lbl">Completed</div>
+            </div>
+          </div>
+          <div style="height:8px"></div>
+          <div class="metrics-row2">
+            <div class="metric-box2">
+              <div class="metric-val2" style="color:var(--amber)">9</div>
+              <div class="metric-delta delta-dn" style="font-size:9px">↓ 10%</div>
+              <div class="metric-lbl">Blocked</div>
+            </div>
+            <div class="metric-box2">
+              <div class="metric-val2">18</div>
+              <div class="metric-delta delta-up" style="font-size:9px">↑ 5%</div>
+              <div class="metric-lbl">Due This Week</div>
+            </div>
+            <div class="metric-box2">
+              <div class="metric-val2" style="color:var(--red)">6</div>
+              <div class="metric-delta delta-dn" style="font-size:9px">↓ 20%</div>
+              <div class="metric-lbl">Overdue</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right col -->
+        <div class="home-right">
+          <div class="card search-card">
+            <div class="search-wrap">
+              <svg viewBox="0 0 14 14"><circle cx="6" cy="6" r="4.5"/><path d="M9.5 9.5L13 13"/></svg>
+              <input type="text" placeholder="Search domain..." oninput="filterDomains(this.value)">
+            </div>
+            <button class="cta-btn cta-secondary" style="width:100%;justify-content:center" onclick="switchView('dashboard',null)">
+              <svg viewBox="0 0 12 12"><path d="M6 1v7.5M3.5 6.5L6 9l2.5-2.5M1 11h10"/></svg>
+              Export Report
+            </button>
+          </div>
+          <div class="card date-card">
+            <div class="date-icon-wrap">
+              <svg viewBox="0 0 16 16"><rect x="1.5" y="3" width="13" height="11" rx="1.5"/><path d="M1.5 6.5h13M5 1.5v3M11 1.5v3"/></svg>
+            </div>
+            <div>
+              <div class="date-main" id="date-display">Monday, April 27, 2026</div>
+              <div class="date-sub" id="week-display">Week 17</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Momentum strip -->
+      <div class="momentum-strip">
+        <span class="mom-label">EYC AI Team Momentum</span>
+        <span style="color:var(--border-strong);margin:0 2px">—</span>
+        <div class="mom-track">
+          <!-- Stage: Stalled -->
+          <div class="mom-stage">
+            <div class="mom-stage-ic"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 11v.5"/></svg></div>
+            <span class="mom-stage-lbl">Stalled</span>
+          </div>
+          <div class="mom-connector"></div>
+          <!-- Stage: Slow -->
+          <div class="mom-stage">
+            <div class="mom-stage-ic"><svg viewBox="0 0 16 16"><path d="M3 8h7M8 5l3 3-3 3"/><circle cx="3.5" cy="8" r="1.5"/></svg></div>
+            <span class="mom-stage-lbl">Slow</span>
+          </div>
+          <div class="mom-connector"></div>
+          <!-- Stage: Steady -->
+          <div class="mom-stage">
+            <div class="mom-stage-ic"><svg viewBox="0 0 16 16"><path d="M2 11l3.5-4 3 3 4-5.5"/></svg></div>
+            <span class="mom-stage-lbl">Steady</span>
+          </div>
+          <div class="mom-connector"></div>
+          <!-- Stage: Strong -->
+          <div class="mom-stage">
+            <div class="mom-stage-ic"><svg viewBox="0 0 16 16"><path d="M2 12l3-5 2.5 3 2-2 3.5 2.5"/><path d="M10 8.5l2-2 2 1.5"/></svg></div>
+            <span class="mom-stage-lbl">Strong</span>
+          </div>
+          <div class="mom-connector"></div>
+          <!-- Stage: Fast — CURRENT -->
+          <div class="mom-stage current">
+            <div class="mom-stage-ic"><svg viewBox="0 0 16 16"><path d="M4 8h8M10 5l4 3-4 3"/><path d="M1 6.5l2 1.5-2 1.5"/></svg></div>
+            <span class="mom-stage-lbl">Fast</span>
+          </div>
+          <div class="mom-connector"></div>
+          <!-- Stage: Peak -->
+          <div class="mom-stage">
+            <div class="mom-stage-ic"><svg viewBox="0 0 16 16"><path d="M8 2l1.8 3.6L14 6.5l-3 2.9.7 4.1L8 11.6l-3.7 1.9.7-4.1-3-2.9 4.2-.9z"/></svg></div>
+            <span class="mom-stage-lbl">Peak</span>
+          </div>
+        </div>
+        <div class="mom-status">
+          <div class="pulse-dot"></div>
+          <div class="mom-status-ic"><svg viewBox="0 0 14 14"><path d="M3 7h8M9 4l4 3-4 3"/><path d="M1 5.5l1.5 1.5L1 8.5"/></svg></div>
+          <span class="mom-status-label">FAST</span>
+        </div>
+        <span class="mom-tagline">Strong momentum — keep pushing forward.</span>
+      </div>
+
+      <!-- Domains grid -->
+      <div class="domains-header">
+        <span class="card-title">Domains</span>
+        <button class="cta-btn cta-primary" onclick="openPanel()">
+          <svg viewBox="0 0 12 12"><path d="M6 1v10M1 6h10"/></svg>
+          Add Domain
+        </button>
+      </div>
+
+      <div class="domain-grid" id="domains-grid">
+
+        <!-- Marketing -->
+        <div class="dc" onclick="openPanel()">
+          <div class="dc-accent-strip" style="background:var(--d1)"></div>
+          <div class="dc-body">
+            <div class="dc-top-row">
+              <div>
+                <div class="dc-name">Marketing</div>
+                <div class="dc-intent">Build brand awareness and drive engagement.</div>
+                <div class="dc-chip-row"><span class="chip chip-accent">Establish Presence</span></div>
+              </div>
+              <div class="dc-ring">
+                <svg viewBox="0 0 44 44">
+                  <circle cx="22" cy="22" r="18" fill="none" stroke="var(--border)" stroke-width="3"/>
+                  <circle cx="22" cy="22" r="18" fill="none" stroke="var(--d1)" stroke-width="3"
+                    stroke-dasharray="88 25" stroke-linecap="round"
+                    style="transform:rotate(-90deg);transform-origin:50% 50%"/>
+                </svg>
+                <div class="dc-ring-pct" style="color:var(--d1)">78%</div>
+              </div>
+            </div>
+            <div class="dc-owner-row">
+              <div class="mini-av" style="background:linear-gradient(135deg,#5046E4,#8B83F0)">JT</div>
+              <span class="dc-owner-name">Jordan T. · Owner</span>
+            </div>
+            <div class="dc-divider"></div>
+            <div class="dc-stats">
+              <div><div class="dc-stat-val">24</div><div class="dc-stat-lbl">Activities</div></div>
+              <div><div class="dc-stat-val">12</div><div class="dc-stat-lbl">In Progress</div></div>
+              <div><div class="dc-stat-val">8</div><div class="dc-stat-lbl">Completed</div></div>
+            </div>
+          </div>
+          <div class="dc-footer">
+            <span class="view-link">View domain<svg viewBox="0 0 12 12"><path d="M2 6h8M7 3l3 3-3 3"/></svg></span>
+          </div>
+        </div>
+
+        <!-- Business Development -->
+        <div class="dc" onclick="openPanel()">
+          <div class="dc-accent-strip" style="background:var(--d2)"></div>
+          <div class="dc-body">
+            <div class="dc-top-row">
+              <div>
+                <div class="dc-name">Business Development</div>
+                <div class="dc-intent">Generate pipeline and strategic partnerships.</div>
+                <div class="dc-chip-row"><span class="chip chip-green">Grow Revenue</span></div>
+              </div>
+              <div class="dc-ring">
+                <svg viewBox="0 0 44 44">
+                  <circle cx="22" cy="22" r="18" fill="none" stroke="var(--border)" stroke-width="3"/>
+                  <circle cx="22" cy="22" r="18" fill="none" stroke="var(--d2)" stroke-width="3"
+                    stroke-dasharray="73 40" stroke-linecap="round"
+                    style="transform:rotate(-90deg);transform-origin:50% 50%"/>
+                </svg>
+                <div class="dc-ring-pct" style="color:var(--d2)">65%</div>
+              </div>
+            </div>
+            <div class="dc-owner-row">
+              <div class="mini-av" style="background:linear-gradient(135deg,#1A8A52,#34d399)">SK</div>
+              <span class="dc-owner-name">Simone K. · Owner</span>
+            </div>
+            <div class="dc-divider"></div>
+            <div class="dc-stats">
+              <div><div class="dc-stat-val">28</div><div class="dc-stat-lbl">Activities</div></div>
+              <div><div class="dc-stat-val">15</div><div class="dc-stat-lbl">In Progress</div></div>
+              <div><div class="dc-stat-val">6</div><div class="dc-stat-lbl">Completed</div></div>
+            </div>
+          </div>
+          <div class="dc-footer">
+            <span class="view-link">View domain<svg viewBox="0 0 12 12"><path d="M2 6h8M7 3l3 3-3 3"/></svg></span>
+          </div>
+        </div>
+
+        <!-- Capability Development -->
+        <div class="dc" onclick="openPanel()">
+          <div class="dc-accent-strip" style="background:var(--d3)"></div>
+          <div class="dc-body">
+            <div class="dc-top-row">
+              <div>
+                <div class="dc-name">Capability Development</div>
+                <div class="dc-intent">Enhance team skills and build core capabilities.</div>
+                <div class="dc-chip-row"><span class="chip chip-violet">Build Capability</span></div>
+              </div>
+              <div class="dc-ring">
+                <svg viewBox="0 0 44 44">
+                  <circle cx="22" cy="22" r="18" fill="none" stroke="var(--border)" stroke-width="3"/>
+                  <circle cx="22" cy="22" r="18" fill="none" stroke="var(--d3)" stroke-width="3"
+                    stroke-dasharray="43 70" stroke-linecap="round"
+                    style="transform:rotate(-90deg);transform-origin:50% 50%"/>
+                </svg>
+                <div class="dc-ring-pct" style="color:var(--d3)">38%</div>
+              </div>
+            </div>
+            <div class="dc-owner-row">
+              <div class="mini-av" style="background:linear-gradient(135deg,#7B3FC4,#a78bfa)">PR</div>
+              <span class="dc-owner-name">Priya R. · Owner</span>
+            </div>
+            <div class="dc-divider"></div>
+            <div class="dc-stats">
+              <div><div class="dc-stat-val">31</div><div class="dc-stat-lbl">Activities</div></div>
+              <div><div class="dc-stat-val">18</div><div class="dc-stat-lbl">In Progress</div></div>
+              <div><div class="dc-stat-val">7</div><div class="dc-stat-lbl">Completed</div></div>
+            </div>
+          </div>
+          <div class="dc-footer">
+            <span class="view-link">View domain<svg viewBox="0 0 12 12"><path d="M2 6h8M7 3l3 3-3 3"/></svg></span>
+          </div>
+        </div>
+
+        <!-- Resourcing -->
+        <div class="dc" onclick="openPanel()">
+          <div class="dc-accent-strip" style="background:var(--d4)"></div>
+          <div class="dc-body">
+            <div class="dc-top-row">
+              <div>
+                <div class="dc-name">Resourcing & Infrastructure</div>
+                <div class="dc-intent">Strengthen systems, tools, and team capacity.</div>
+                <div class="dc-chip-row"><span class="chip chip-teal">Reduce Risk</span></div>
+              </div>
+              <div class="dc-ring">
+                <svg viewBox="0 0 44 44">
+                  <circle cx="22" cy="22" r="18" fill="none" stroke="var(--border)" stroke-width="3"/>
+                  <circle cx="22" cy="22" r="18" fill="none" stroke="var(--d4)" stroke-width="3"
+                    stroke-dasharray="20 93" stroke-linecap="round"
+                    style="transform:rotate(-90deg);transform-origin:50% 50%"/>
+                </svg>
+                <div class="dc-ring-pct" style="color:var(--d4)">18%</div>
+              </div>
+            </div>
+            <div class="dc-owner-row">
+              <div class="mini-av" style="background:linear-gradient(135deg,#C4601A,#fb923c)">DM</div>
+              <span class="dc-owner-name">Daniel M. · Owner</span>
+            </div>
+            <div class="dc-divider"></div>
+            <div class="dc-stats">
+              <div><div class="dc-stat-val">25</div><div class="dc-stat-lbl">Activities</div></div>
+              <div><div class="dc-stat-val">17</div><div class="dc-stat-lbl">In Progress</div></div>
+              <div><div class="dc-stat-val">5</div><div class="dc-stat-lbl">Completed</div></div>
+            </div>
+          </div>
+          <div class="dc-footer">
+            <span class="view-link">View domain<svg viewBox="0 0 12 12"><path d="M2 6h8M7 3l3 3-3 3"/></svg></span>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /home -->
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="view" id="view-dashboard">
+      <div class="dash-kpis">
+        <div class="card kpi-card">
+          <div class="kpi-val">128</div>
+          <div class="kpi-lbl">Total Activities</div>
+          <div class="kpi-delta delta-up">↑ 12% vs last 7 days</div>
+          <div class="kpi-bar-track"><div class="kpi-bar-fill" style="width:0%;background:var(--accent)" data-target="72"></div></div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-val" style="color:var(--accent)">62</div>
+          <div class="kpi-lbl">In Progress</div>
+          <div class="kpi-delta delta-up">↑ 8%</div>
+          <div class="kpi-bar-track"><div class="kpi-bar-fill" style="width:0%;background:var(--accent)" data-target="48"></div></div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-val" style="color:var(--green)">34</div>
+          <div class="kpi-lbl">Completed</div>
+          <div class="kpi-delta delta-up">↑ 15%</div>
+          <div class="kpi-bar-track"><div class="kpi-bar-fill" style="width:0%;background:var(--green)" data-target="27"></div></div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-val" style="color:var(--amber)">9</div>
+          <div class="kpi-lbl">Blocked</div>
+          <div class="kpi-delta delta-dn">↓ 10%</div>
+          <div class="kpi-bar-track"><div class="kpi-bar-fill" style="width:0%;background:var(--amber)" data-target="7"></div></div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-val" style="color:var(--red)">6</div>
+          <div class="kpi-lbl">Overdue</div>
+          <div class="kpi-delta delta-dn">↓ 20%</div>
+          <div class="kpi-bar-track"><div class="kpi-bar-fill" style="width:0%;background:var(--red)" data-target="5"></div></div>
+        </div>
+      </div>
+
+      <!-- Export panel -->
+      <div class="card dash-export" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span class="card-title">Export Report</span>
+          <span style="font-size:10px;color:var(--ink-3)">Choose a format to download</span>
+        </div>
+        <div class="export-options">
+          <div class="export-opt">
+            <div class="exp-icon"><svg viewBox="0 0 22 22"><rect x="2" y="2" width="18" height="18" rx="2"/><path d="M7 11h8M7 7.5h5M7 14.5h4"/></svg></div>
+            <div class="exp-name">Excel</div>
+            <div class="exp-desc">Full data export</div>
+          </div>
+          <div class="export-opt">
+            <div class="exp-icon"><svg viewBox="0 0 22 22"><path d="M5 2h9l5 5v13a1 1 0 01-1 1H5a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M14 2v5h5M8 11h6M8 14.5h4"/></svg></div>
+            <div class="exp-name">PDF Report</div>
+            <div class="exp-desc">Formatted summary</div>
+          </div>
+          <div class="export-opt">
+            <div class="exp-icon"><svg viewBox="0 0 22 22"><rect x="2" y="2" width="18" height="14" rx="1.5"/><path d="M2 7h18M9 11l2.5 2.5 2.5-2.5"/></svg></div>
+            <div class="exp-name">Email Digest</div>
+            <div class="exp-desc">Send update to team</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-mid">
+        <div class="card">
+          <div style="padding:14px 14px 0"><span class="card-title">Recent Activities</span></div>
+          <table class="activity-table">
+            <thead>
+              <tr><th>Activity</th><th>Domain</th><th>Owner</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr onclick="openPanel()">
+                <td><span class="act-priority" style="background:var(--red)"></span><span class="act-name">EY Brand guidelines refresh — CARICOM</span></td>
+                <td><span class="act-sub">Marketing</span></td>
+                <td><span class="act-sub">Jordan T.</span></td>
+                <td><span class="status-pill pill-active">Active</span></td>
+              </tr>
+              <tr onclick="openPanel()">
+                <td><span class="act-priority" style="background:var(--amber)"></span><span class="act-name">Thought leadership — digital transformation</span></td>
+                <td><span class="act-sub">Marketing</span></td>
+                <td><span class="act-sub">Priya R.</span></td>
+                <td><span class="status-pill pill-stagnant">Stagnant</span></td>
+              </tr>
+              <tr onclick="openPanel()">
+                <td><span class="act-priority" style="background:var(--red)"></span><span class="act-name">Resourcing infrastructure review</span></td>
+                <td><span class="act-sub">Resourcing</span></td>
+                <td><span class="act-sub">Daniel M.</span></td>
+                <td><span class="status-pill pill-blocked">Blocked</span></td>
+              </tr>
+              <tr onclick="openPanel()">
+                <td><span class="act-priority" style="background:var(--border-strong)"></span><span class="act-name">LinkedIn campaign — Q2 results showcase</span></td>
+                <td><span class="act-sub">Marketing</span></td>
+                <td><span class="act-sub">Jordan T.</span></td>
+                <td><span class="status-pill pill-active">Active</span></td>
+              </tr>
+              <tr onclick="openPanel()">
+                <td><span class="act-priority" style="background:var(--amber)"></span><span class="act-name">Q2 Capability Audit</span></td>
+                <td><span class="act-sub">Capability Dev</span></td>
+                <td><span class="act-sub">Priya R.</span></td>
+                <td><span class="status-pill pill-stagnant">Stagnant</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="donut-section">
+            <span class="card-title" style="align-self:flex-start;margin-bottom:14px">Status Breakdown</span>
+            <div class="donut-wrap">
+              <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--border)" stroke-width="11"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#8B83F0" stroke-width="11"
+                  stroke-dasharray="110 239" style="transform:rotate(-90deg);transform-origin:50% 50%"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#34d399" stroke-width="11"
+                  stroke-dasharray="69 280" stroke-dashoffset="-110" style="transform:rotate(-90deg);transform-origin:50% 50%"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#FBB040" stroke-width="11"
+                  stroke-dasharray="31 318" stroke-dashoffset="-179" style="transform:rotate(-90deg);transform-origin:50% 50%"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#F87171" stroke-width="11"
+                  stroke-dasharray="10 339" stroke-dashoffset="-210" style="transform:rotate(-90deg);transform-origin:50% 50%"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--border-strong)" stroke-width="11"
+                  stroke-dasharray="19 320" stroke-dashoffset="-220" style="transform:rotate(-90deg);transform-origin:50% 50%"/>
+              </svg>
+              <div class="donut-center">
+                <div class="donut-num">128</div>
+                <div class="donut-lbl">Total</div>
+              </div>
+            </div>
+            <div class="legend">
+              <div class="leg-row"><div class="leg-dot" style="background:#8B83F0"></div>In Progress 48%</div>
+              <div class="leg-row"><div class="leg-dot" style="background:#34d399"></div>Done 27%</div>
+              <div class="leg-row"><div class="leg-dot" style="background:#FBB040"></div>Stagnant 12%</div>
+              <div class="leg-row"><div class="leg-dot" style="background:#F87171"></div>Blocked 4%</div>
+              <div class="leg-row"><div class="leg-dot" style="background:var(--border-strong)"></div>Backlog 9%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /dashboard -->
+
+    <!-- ══ MEETING ══ -->
+    <div class="view" id="view-meeting">
+      <div class="meeting-hero">
+        <div class="hero-left">
+          <div class="hero-eyebrow">Week of 14 April 2026 · Pulse Review</div>
+          <div class="hero-title">EYC AI Team Pulse Check</div>
+        </div>
+        <div class="hero-stats">
+          <div class="h-stat"><div class="h-num">11</div><div class="h-lbl">Created</div></div>
+          <div class="h-stat"><div class="h-num green">7</div><div class="h-lbl">Completed</div></div>
+          <div class="h-stat"><div class="h-num amber">3</div><div class="h-lbl">Attention</div></div>
+        </div>
+      </div>
+      <div class="meet-cols">
+        <div class="card meet-col">
+          <div class="meet-col-title title-win">
+            <svg viewBox="0 0 12 12"><path d="M2 6l3 3 5-5"/></svg>
+            Wins This Cycle
+          </div>
+          <div class="win-item"><div><div class="win-name">Website hero banner update</div><div class="win-meta">Marketing · Jordan T.</div></div><span class="status-pill pill-done">Done</span></div>
+          <div class="win-item"><div><div class="win-name">Client case study — fintech sector</div><div class="win-meta">Marketing · Simone K.</div></div><span class="status-pill pill-done">Done</span></div>
+          <div class="win-item"><div><div class="win-name">Capability framework v1 published</div><div class="win-meta">Capability Dev · Priya R.</div></div><span class="status-pill pill-done">Done</span></div>
+        </div>
+        <div class="card meet-col">
+          <div class="meet-col-title title-att">
+            <svg viewBox="0 0 12 12"><path d="M6 1v5M6 9v.5"/><path d="M1 11h10L6 1 1 11z"/></svg>
+            Needs Attention
+          </div>
+          <div class="att-item" onclick="openPanel()"><div class="att-name">Thought leadership — digital transformation</div><div class="att-warn">No update in 12 days · Priya R.</div></div>
+          <div class="att-item" onclick="openPanel()"><div class="att-name">Q2 Capability Audit</div><div class="att-warn">No update in 15 days · Priya R.</div></div>
+          <div class="att-item critical" onclick="openPanel()"><div class="att-name">Resourcing infrastructure review</div><div class="att-warn">Blocked · 18 days without progress · Daniel M.</div></div>
+        </div>
+      </div>
+    </div><!-- /meeting -->
+
+    <!-- ══ ACTIVITY ══ -->
+    <div class="view" id="view-activity">
+      <div class="act-view-top">
+        <span class="card-title" style="font-size:14px">All Activities</span>
+        <button class="cta-btn cta-primary" onclick="openPanel()">
+          <svg viewBox="0 0 12 12"><path d="M6 1v10M1 6h10"/></svg>
+          New Activity
+        </button>
+      </div>
+      <div class="kanban">
+        <div class="k-col">
+          <div class="k-col-hdr">
+            <span class="k-col-name bk">Backlog</span>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span class="k-col-ct">3</span>
+              <span class="k-add" onclick="openPanel()">＋ Add</span>
+            </div>
+          </div>
+          <div class="k-card p-low" onclick="openPanel()"><div class="k-card-title">Social media content calendar Q3</div><div class="k-card-footer"><div class="mini-av" style="width:18px;height:18px;font-size:7px;background:linear-gradient(135deg,#5046E4,#8B83F0)">JT</div><span class="k-card-time">3d ago</span></div></div>
+          <div class="k-card p-med" onclick="openPanel()"><div class="k-card-title">Competitor analysis — advisory market</div><div class="k-card-footer"><div class="mini-av" style="width:18px;height:18px;font-size:7px;background:linear-gradient(135deg,#1A8A52,#34d399)">SK</div><span class="k-card-time">5d ago</span></div></div>
+          <div class="k-card p-low" onclick="openPanel()"><div class="k-card-title">Internal newsletter setup</div><div class="k-card-footer"><div class="mini-av" style="width:18px;height:18px;font-size:7px;background:linear-gradient(135deg,#C4601A,#fb923c)">DM</div><span class="k-card-time">1w ago</span></div></div>
+        </div>
+        <div class="k-col">
+          <div class="k-col-hdr">
+            <span class="k-col-name ip">In Progress</span>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span class="k-col-ct">5</span>
+              <span class="k-add" onclick="openPanel()">＋ Add</span>
+            </div>
+          </div>
+          <div class="k-card p-high" onclick="openPanel()"><div class="k-card-title">EY Brand guidelines refresh — CARICOM</div><div class="k-card-footer"><div class="mini-av" style="width:18px;height:18px;font-size:7px;background:linear-gradient(135deg,#5046E4,#8B83F0)">JT</div><span class="k-card-time">1d ago</span></div></div>
+          <div class="k-card p-med stagnant" onclick="openPanel()"><div class="k-stag-label">12 days — no update</div><div class="k-card-title">Thought leadership — digital transformation</div><div class="k-card-footer"><div class="mini-av" style="width:18px;height:18px;font-size:7px;background:linear-gradient(135deg,#7B3FC4,#a78bfa)">PR</div><span class="k-card-time" style="color:var(--amber)">Stagnant</span></div></div>
+          <div class="k-card p-low" onclick="openPanel()"><div class="k-card-title">LinkedIn campaign — Q2 results showcase</div><div class="k-card-footer"><div class="mini-av" style="width:18px;height:18px;font-size:7px;background:linear-gradient(135deg,#C4601A,#fb923c)">DM</div><span class="k-card-time">2d ago</span></div></div>
+          <div class="k-card p-high stagnant" onclick="openPanel()"><div class="k-stag-label">15 days — no update</div><div class="k-card-title">Q2 Capability Audit</div><div class="k-card-footer"><div class="mini-av" style="width:18px;height:18px;font-size:7px;background:linear-gradient(135deg,#7B3FC4,#a78bfa)">PR</div><span class="k-card-time" style="color:var(--amber)">Stagnant</span></div></div>
+        </div>
+        <div class="k-col">
+          <div class="k-col-hdr"><span class="k-col-name bl">Blocked</span><span class="k-col-ct">1</span></div>
+          <div class="k-card p-high" style="border-color:rgba(196,52,26,0.2)" onclick="openPanel()"><div class="k-card-title">Resourcing infrastructure review</div><div class="k-card-footer"><div class="mini-av" style="width:18px;height:18px;font-size:7px;background:linear-gradient(135deg,#C4601A,#fb923c)">DM</div><span class="k-card-time" style="color:var(--red)">18d · Blocked</span></div></div>
+        </div>
+        <div class="k-col">
+          <div class="k-col-hdr"><span class="k-col-name dn">Completed</span><span class="k-col-ct">7</span></div>
+          <div class="k-card p-low" style="opacity:0.5" onclick="openPanel()"><div class="k-card-title">Website hero banner update</div><div class="k-card-footer"><div class="mini-av" style="width:18px;height:18px;font-size:7px;background:linear-gradient(135deg,#5046E4,#8B83F0)">JT</div><span class="k-card-time">2d ago</span></div></div>
+          <div class="k-card p-low" style="opacity:0.5" onclick="openPanel()"><div class="k-card-title">Client case study — fintech sector</div><div class="k-card-footer"><div class="mini-av" style="width:18px;height:18px;font-size:7px;background:linear-gradient(135deg,#1A8A52,#34d399)">SK</div><span class="k-card-time">4d ago</span></div></div>
+          <div class="k-card p-low" style="opacity:0.5" onclick="openPanel()"><div class="k-card-title">Capability framework v1 published</div><div class="k-card-footer"><div class="mini-av" style="width:18px;height:18px;font-size:7px;background:linear-gradient(135deg,#7B3FC4,#a78bfa)">PR</div><span class="k-card-time">6d ago</span></div></div>
+        </div>
+      </div>
+    </div><!-- /activity -->
+
+    <!-- ══ CALENDAR ══ -->
+    <div class="view" id="view-calendar">
+      <div class="cal-top">
+        <span class="cal-month">April 2026</span>
+        <div class="cal-nav">
+          <div class="cal-nav-btn"><svg viewBox="0 0 12 12"><path d="M8 2L4 6l4 4"/></svg></div>
+          <div class="cal-nav-btn"><svg viewBox="0 0 12 12"><path d="M4 2l4 4-4 4"/></svg></div>
+        </div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div><!-- /calendar -->
+
+  </main><!-- /canvas -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- PANEL -->
+<div class="panel-backdrop" id="backdrop" onclick="closePanel()"></div>
+<div class="panel" id="panel">
+  <div class="panel-head">
+    <div style="flex:1;min-width:0">
+      <div class="ph-tags">
+        <span class="chip chip-accent">Marketing</span>
+        <span class="chip chip-violet">Build Capability</span>
+      </div>
+      <div class="ph-title">Thought leadership — digital transformation</div>
+      <div class="ph-meta">Created by Priya R. · 18 Apr 2026 · Owner: Priya R.</div>
+    </div>
+    <div class="close-btn" onclick="closePanel()">
+      <svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8"/></svg>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="pf-grid">
+      <div class="pf-item">
+        <div class="pf-label">Owner</div>
+        <div class="pf-value"><div class="mini-av" style="width:20px;height:20px;font-size:8px;background:linear-gradient(135deg,#7B3FC4,#a78bfa)">PR</div>Priya R.</div>
+      </div>
+      <div class="pf-item">
+        <div class="pf-label">Priority</div>
+        <div class="pf-value"><span style="width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block"></span>High</div>
+      </div>
+      <div class="pf-item">
+        <div class="pf-label">Target Date</div>
+        <div class="pf-value" style="color:var(--ink-2)">30 Apr 2026</div>
+      </div>
+    </div>
+
+    <div class="stag-warning">
+      <svg viewBox="0 0 14 14"><path d="M7 1.5v5M7 9.5v.5"/><path d="M1.5 12.5h11L7 1.5 1.5 12.5z"/></svg>
+      No update in 12 days — this activity is flagged as stagnant.
+    </div>
+
+    <div class="update-section">
+      <div class="update-label">Log Update</div>
+      <div class="status-pills">
+        <div class="status-toggle st-backlog" onclick="selectStatus(this)">Backlog</div>
+        <div class="status-toggle st-active selected" onclick="selectStatus(this)">In Progress</div>
+        <div class="status-toggle st-blocked" onclick="selectStatus(this)">Blocked</div>
+        <div class="status-toggle st-done" onclick="selectStatus(this)">Completed</div>
+      </div>
+      <textarea class="update-textarea" id="update-text" placeholder="What happened? What's next? What's blocking?" oninput="updateCharCount()"></textarea>
+      <div class="update-footer">
+        <span></span>
+        <span class="char-count"><span id="char-count">0</span> / 280</span>
+      </div>
+      <button class="log-btn" onclick="logUpdate()">Log Update</button>
+    </div>
+
+    <div class="history-divider"></div>
+    <div class="history-lbl">History</div>
+    <div id="history-list">
+      <div class="hist-entry">
+        <div class="hist-av-col">
+          <div class="mini-av" style="background:linear-gradient(135deg,#7B3FC4,#a78bfa)">PR</div>
+          <div class="hist-vline"></div>
+        </div>
+        <div class="hist-content">
+          <div class="hist-meta">
+            <span class="hist-author">Priya R.</span>
+            <span class="hist-time">12 days ago</span>
+            <span class="status-pill pill-active">In Progress</span>
+          </div>
+          <div class="hist-note">Started the outline and pulled relevant EY global research. Waiting on Marcus to confirm the angle before writing begins.</div>
+        </div>
+      </div>
+      <div class="hist-entry">
+        <div class="hist-av-col">
+          <div class="mini-av" style="background:linear-gradient(135deg,#5046E4,#8B83F0)">AM</div>
+          <div class="hist-vline"></div>
+        </div>
+        <div class="hist-content">
+          <div class="hist-meta">
+            <span class="hist-author">Anil M.</span>
+            <span class="hist-time">14 days ago</span>
+            <span class="status-pill pill-active">In Progress</span>
+          </div>
+          <div class="hist-note">Assigned to Priya. Target audience: senior private-sector leaders. Should connect to the Q2 digital advisory push.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Sidebar toggle
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ── View switching
+const viewTitles = {
+  home: 'Home',
+  dashboard: 'Dashboard View',
+  meeting: 'Meeting View',
+  activity: 'Activity View',
+  calendar: 'Calendar'
+};
+
+function switchView(id, navEl) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  document.getElementById('topbar-title').textContent = viewTitles[id];
+  if (navEl) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    navEl.classList.add('active');
+  }
+  if (id === 'calendar') buildCalendar();
+  if (id === 'dashboard') animateBars();
+}
+
+// ── Panel
+function openPanel() {
+  document.getElementById('backdrop').classList.add('open');
+  document.getElementById('panel').classList.add('open');
+}
+function closePanel() {
+  document.getElementById('backdrop').classList.remove('open');
+  document.getElementById('panel').classList.remove('open');
+}
+
+// ── Status pills
+function selectStatus(el) {
+  document.querySelectorAll('.status-toggle').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ── Char count
+function updateCharCount() {
+  const val = document.getElementById('update-text').value;
+  document.getElementById('char-count').textContent = val.length;
+}
+
+// ── Log update
+function logUpdate() {
+  const text = document.getElementById('update-text').value.trim();
+  if (!text) { document.getElementById('update-text').focus(); return; }
+  const list = document.getElementById('history-list');
+  const entry = document.createElement('div');
+  entry.className = 'hist-entry';
+  entry.innerHTML = `
+    <div class="hist-av-col">
+      <div class="mini-av" style="background:linear-gradient(135deg,#5046E4,#8B83F0)">AM</div>
+      <div class="hist-vline"></div>
+    </div>
+    <div class="hist-content">
+      <div class="hist-meta">
+        <span class="hist-author">Anil M.</span>
+        <span class="hist-time">Just now</span>
+        <span class="status-pill pill-active">In Progress</span>
+      </div>
+      <div class="hist-note">${text}</div>
+    </div>`;
+  list.prepend(entry);
+  document.getElementById('update-text').value = '';
+  document.getElementById('char-count').textContent = '0';
+  document.querySelector('.stag-warning').style.display = 'none';
+}
+
+// ── Domain search filter
+function filterDomains(q) {
+  document.querySelectorAll('.dc').forEach(card => {
+    const name = card.querySelector('.dc-name').textContent.toLowerCase();
+    card.style.display = (!q || name.includes(q.toLowerCase())) ? '' : 'none';
+  });
+}
+
+// ── Date display
+(function setDate() {
+  const now = new Date(2026, 3, 27); // April 27 2026
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const start = new Date(now.getFullYear(), 0, 1);
+  const week = Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7);
+  document.getElementById('date-display').textContent =
+    `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+  document.getElementById('week-display').textContent = `Week ${week}`;
+})();
+
+// ── KPI bars animation
+function animateBars() {
+  setTimeout(() => {
+    document.querySelectorAll('[data-target]').forEach(bar => {
+      bar.style.width = bar.dataset.target + '%';
+    });
+  }, 80);
+}
+
+// ── Calendar builder
+function buildCalendar() {
+  const grid = document.getElementById('cal-grid');
+  if (grid.children.length) return;
+
+  const dayLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  dayLabels.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-day-label';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  const events = {
+    3:  [{t:'Brand Review',c:'ce-accent'}],
+    7:  [{t:'Team Sync',c:'ce-teal'}],
+    14: [{t:'Pulse Meeting',c:'ce-teal'},{t:'Q2 Review',c:'ce-amber'}],
+    20: [{t:'Capability',c:'ce-violet'}],
+    27: [{t:'Today',c:'ce-amber'}],
+    28: [{t:'Sprint End',c:'ce-accent'}]
+  };
+
+  // April 2026 starts on Wednesday (day index 3)
+  const startDay = 3;
+  for (let i = 0; i < startDay; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day other';
+    el.innerHTML = `<div class="cal-day-num">${29 + i}</div>`;
+    grid.appendChild(el);
+  }
+  for (let d = 1; d <= 30; d++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day' + (d === 27 ? ' today' : '');
+    let html = `<div class="cal-day-num">${d}</div>`;
+    if (events[d]) events[d].forEach(ev => { html += `<div class="cal-ev ${ev.c}">${ev.t}</div>`; });
+    el.innerHTML = html;
+    grid.appendChild(el);
+  }
+  const remaining = (7 - (startDay + 30) % 7) % 7;
+  for (let i = 1; i <= remaining; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day other';
+    el.innerHTML = `<div class="cal-day-num">${i}</div>`;
+    grid.appendChild(el);
+  }
+}
+</script>
+</body>
+</html>
